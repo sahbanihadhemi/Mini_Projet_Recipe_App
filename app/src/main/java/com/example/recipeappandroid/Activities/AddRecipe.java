@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.fonts.FontFamily;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -40,8 +41,9 @@ public class AddRecipe extends AppCompatActivity {
     EditText overview;
     Uri uri;
     String imageUri;
-    int id=0;
     DatabaseReference ref;
+    int id=0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +53,7 @@ public class AddRecipe extends AppCompatActivity {
         overview=findViewById(R.id.Recipe_overview);
         name=findViewById(R.id.Recipe_name);
         steps=findViewById(R.id.Recipe_steps);
+
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
         {
             ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},100);
@@ -60,23 +63,7 @@ public class AddRecipe extends AppCompatActivity {
 
         }
 
-         ref= FirebaseDatabase.getInstance().getReference().child("Recipe");
-         ref.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists())
-                {
-                    id= (int) snapshot.getChildrenCount();}
-                else{
 
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
     }
 
     public void pickImage(View view) {
@@ -134,6 +121,35 @@ public class AddRecipe extends AppCompatActivity {
         String stepRecipe=steps.getText().toString().trim();
         String overviewRecipe=overview.getText().toString().trim();
         Recipe recipe =new Recipe(nameRecipe,stepRecipe,overviewRecipe,imageUri);
-        ref.child(String.valueOf(id+1)).setValue(recipe);
+        ref= FirebaseDatabase.getInstance().getReference("Recipe");
+         ref.addValueEventListener(new ValueEventListener() {
+             @Override
+             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                 if(snapshot.exists())
+                 {
+                     id= (int) snapshot.getChildrenCount();}
+                 else{}
+
+             }
+
+             @Override
+             public void onCancelled(@NonNull DatabaseError error) {
+
+             }
+         });
+        FirebaseDatabase.getInstance().getReference("Recipe").child(String.valueOf(id))
+       .setValue(recipe).addOnSuccessListener(new OnSuccessListener<Void>() {
+           @Override
+           public void onSuccess(Void aVoid) {
+               Toast.makeText(AddRecipe.this,"Success",Toast.LENGTH_SHORT).show();
+
+           }
+       }).addOnFailureListener(new OnFailureListener() {
+           @Override
+           public void onFailure(@NonNull Exception e) {
+               Toast.makeText(AddRecipe.this,"Error"+e.getMessage(),Toast.LENGTH_SHORT).show();
+
+           }
+       });
     }
 }
